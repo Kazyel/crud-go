@@ -1,0 +1,42 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of `go build`, `go test`, etc.
+bin/
+build/
+dist/
+*.log
+
+# Migrations
+migrations/
+
+# Dependency directories (if vendoring)
+vendor/
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Env/config files (optional, depending on your project)
+.env
+.env.*
+
+# Coverage & test data
+*.coverprofile
+coverage.out
+*.testresult
+
+# Go tools
+go.sum
