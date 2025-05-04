@@ -29,7 +29,11 @@ func setupRouter(db *pgx.Conn) *gin.Engine {
 	userHandler := handlers.NewUserHandler(userService)
 
 	router := gin.Default()
-	router.POST("/users", userHandler.CreateUser)
+
+	publicRoute := router.Group("/api/v1")
+	publicRoute.POST("/users", userHandler.CreateUser)
+	publicRoute.GET("/users/:id", userHandler.GetUserByID)
+
 	return router
 }
 
@@ -40,9 +44,10 @@ func main() {
 	}
 
 	database := setupDatabase()
+	defer database.Close(context.Background())
+
 	router := setupRouter(database)
 	router.Run(":8080")
 
 	fmt.Println("Server started.")
-	defer database.Close(context.Background())
 }
