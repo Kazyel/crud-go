@@ -32,10 +32,11 @@ func setupRouter(db *pgx.Conn) *gin.Engine {
 	userService := services.CreateUserService(userRepo)
 	userHandler := handlers.CreateUserHandler(userService)
 
-	publicRoute := router.Group("/api/v1")
-	publicRoute.POST("/users", userHandler.CreateUser)
-	publicRoute.GET("/users/:id", userHandler.GetUserByID)
-	publicRoute.PATCH("/users/:id", userHandler.UpdateUser)
+	userRoute := router.Group("/api/v1/users")
+	userRoute.POST("/", userHandler.CreateUser)
+	userRoute.GET("/:id", userHandler.GetUserByID)
+	userRoute.PATCH("/:id", userHandler.UpdateUser)
+	userRoute.DELETE("/:id", userHandler.DeleteUser)
 
 	return router
 }

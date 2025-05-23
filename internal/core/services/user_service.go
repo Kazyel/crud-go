@@ -6,6 +6,7 @@ import (
 	"rest-crud-go/internal/core/models"
 	"rest-crud-go/internal/core/repositories"
 	"rest-crud-go/internal/core/utils"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -79,4 +80,18 @@ func (s *UserService) UpdateUser(ctx context.Context, id string, req *models.Use
 	}
 
 	return updatedUser, nil
+}
+
+func (s *UserService) DeleteUser(ctx context.Context, id string) error {
+	err := s.repo.DeleteUser(ctx, id)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return fmt.Errorf("user with ID %s not found", id)
+		}
+
+		return fmt.Errorf("repository failed: %w", err)
+	}
+
+	return nil
 }

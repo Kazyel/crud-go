@@ -82,3 +82,20 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 		"user": user,
 	})
 }
+
+func (h *UserHandler) DeleteUser(ctx *gin.Context) {
+	userId := ctx.Param("id")
+
+	err := h.service.DeleteUser(ctx, userId)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "user deleted successfully!",
+	})
+}
