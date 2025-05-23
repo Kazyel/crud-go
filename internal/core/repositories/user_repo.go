@@ -9,11 +9,11 @@ import (
 )
 
 type UserRepository interface {
+	GetUserByID(context context.Context, id string) (*models.User, error)
+	GetAllUsers(context context.Context, limit, offset int) ([]models.UsersData, error)
 	CreateUser(context context.Context, user *models.User) error
-	GetByID(context context.Context, id string) (*models.User, error)
 	UpdateUser(context context.Context, id string, user *models.UserUpdate) (*models.User, error)
 	DeleteUser(context context.Context, id string) error
-	// GetAll(context context.Context) ([]models.User, error)
 }
 
 type userRepository struct {
@@ -39,7 +39,7 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 	return nil
 }
 
-func (r *userRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
+func (r *userRepository) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	query := `
 		SELECT id, name, email, created_at 
 		FROM users 
@@ -118,4 +118,20 @@ func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (r *userRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error) {
+	query := `
+	SELECT id, name, email FROM users
+	LIMIT $1 OFFSET $2
+	`
+	rows, err := r.db.Query(ctx, query, limit, offset)
+
+	if err != nil {
+		return nil, fmt.Errorf("error getting all users: %w", err)
+	}
+
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.UsersData])
 }

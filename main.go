@@ -37,6 +37,7 @@ func setupRouter(db *pgx.Conn) *gin.Engine {
 	userRoute.GET("/:id", userHandler.GetUserByID)
 	userRoute.PATCH("/:id", userHandler.UpdateUser)
 	userRoute.DELETE("/:id", userHandler.DeleteUser)
+	userRoute.GET("/all", userHandler.GetAllUsers)
 
 	return router
 }

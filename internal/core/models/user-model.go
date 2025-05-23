@@ -21,3 +21,9 @@ type UserUpdate struct {
 	Password    pgtype.Text      `json:"-"`
 	LastUpdated pgtype.Timestamp `json:"-"`
 }
+
+type UsersData struct {
+	ID    string `json:"id" db:"id"`
+	Name  string `json:"name" db:"name"`
+	Email string `json:"email" db:"email"`
+}

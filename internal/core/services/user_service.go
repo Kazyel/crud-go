@@ -44,7 +44,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.UserRequest) (
 }
 
 func (s *UserService) GetUserByID(ctx context.Context, id string) (*models.User, error) {
-	user, err := s.repo.GetByID(ctx, id)
+	user, err := s.repo.GetUserByID(ctx, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("repository failed: %w", err)
@@ -94,4 +94,14 @@ func (s *UserService) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (s *UserService) GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error) {
+	users, err := s.repo.GetAllUsers(ctx, limit, offset)
+
+	if err != nil {
+		return nil, fmt.Errorf("repository failed: %w", err)
+	}
+
+	return users, nil
 }

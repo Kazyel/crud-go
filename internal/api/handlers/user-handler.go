@@ -13,6 +13,11 @@ type UserHandler struct {
 	service *services.UserService
 }
 
+type Pagination struct {
+	Limit  int `form:"limit" binding:"omitempty,gt=0, lte=20"`
+	Offset int `form:"offset" binding:"omitempty,gt=0,lte=100"`
+}
+
 func CreateUserHandler(service *services.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
@@ -20,14 +25,12 @@ func CreateUserHandler(service *services.UserService) *UserHandler {
 func (h *UserHandler) CreateUser(ctx *gin.Context) {
 	var userRequest models.UserRequest
 
-	err := ctx.ShouldBindJSON(&userRequest)
-
-	if err != nil {
+	if err := ctx.ShouldBindJSON(&userRequest); err != nil {
 		utils.HandleBindingError(ctx, err)
 		return
 	}
 
-	_, err = h.service.CreateUser(ctx, &userRequest)
+	_, err := h.service.CreateUser(ctx, &userRequest)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -62,9 +65,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	var userRequest models.UserUpdateRequest
 	userId := ctx.Param("id")
 
-	err := ctx.ShouldBindJSON(&userRequest)
-
-	if err != nil {
+	if err := ctx.ShouldBindJSON(&userRequest); err != nil {
 		utils.HandleBindingError(ctx, err)
 		return
 	}
@@ -86,7 +87,37 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
-	err := h.service.DeleteUser(ctx, userId)
+	if err := h.service.DeleteUser(ctx, userId); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "user deleted successfully!",
+	})
+}
+
+func (h *UserHandler) GetAllUsers(ctx *gin.Context) {
+	var page Pagination
+	var LIMIT int = 15
+	var OFFSET int = 0
+
+	if err := ctx.ShouldBindQuery(&page); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if page.Limit != 0 {
+		LIMIT = page.Limit
+	}
+
+	if page.Offset != 0 {
+		OFFSET = page.Offset
+	}
+
+	users, err := h.service.GetAllUsers(ctx, LIMIT, OFFSET)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -96,6 +127,6 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "user deleted successfully!",
+		"message": users,
 	})
 }
