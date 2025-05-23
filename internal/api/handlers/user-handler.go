@@ -12,7 +12,7 @@ type UserHandler struct {
 	service *services.UserService
 }
 
-func NewUserHandler(service *services.UserService) *UserHandler {
+func CreateUserHandler(service *services.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
@@ -23,16 +23,18 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
+		return
 	}
 
 	_, err = h.service.CreateUser(ctx, &user)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
@@ -41,8 +43,18 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 }
 
 func (h *UserHandler) GetUserByID(ctx *gin.Context) {
-	// userId := ctx.Param("id")
+	userId := ctx.Param("id")
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	user, err := h.service.GetUserByID(ctx, userId)
 
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"user": user,
+	})
 }

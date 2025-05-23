@@ -16,19 +16,21 @@ import (
 
 func setupDatabase() *pgx.Conn {
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
+
 	fmt.Print("Connected to database.\n\n")
 	return conn
 }
 
 func setupRouter(db *pgx.Conn) *gin.Engine {
-	userRepo := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepo)
-	userHandler := handlers.NewUserHandler(userService)
-
 	router := gin.Default()
+
+	userRepo := repositories.CreateUserRepository(db)
+	userService := services.CreateUserService(userRepo)
+	userHandler := handlers.CreateUserHandler(userService)
 
 	publicRoute := router.Group("/api/v1")
 	publicRoute.POST("/users", userHandler.CreateUser)
@@ -44,9 +46,9 @@ func main() {
 	}
 
 	database := setupDatabase()
-	defer database.Close(context.Background())
-
 	router := setupRouter(database)
+
+	defer database.Close(context.Background())
 	router.Run(":8080")
 
 	fmt.Println("Server started.")

@@ -21,7 +21,7 @@ type userRepository struct {
 	db *pgx.Conn
 }
 
-func NewUserRepository(db *pgx.Conn) *userRepository {
+func CreateUserRepository(db *pgx.Conn) *userRepository {
 	return &userRepository{db: db}
 }
 

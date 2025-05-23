@@ -15,7 +15,7 @@ type UserService struct {
 	repo repositories.UserRepository
 }
 
-func NewUserService(repo repositories.UserRepository) *UserService {
+func CreateUserService(repo repositories.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
@@ -34,6 +34,16 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 	}
 
 	err = s.repo.CreateUser(ctx, user)
+
+	if err != nil {
+		return nil, fmt.Errorf("repository failed: %w", err)
+	}
+
+	return user, nil
+}
+
+func (s *UserService) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+	user, err := s.repo.GetByID(ctx, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("repository failed: %w", err)
