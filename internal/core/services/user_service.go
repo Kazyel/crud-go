@@ -8,7 +8,7 @@ import (
 	"rest-crud-go/internal/core/utils"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type UserService struct {
@@ -19,7 +19,7 @@ func CreateUserService(repo repositories.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequest) (*models.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, req *models.UserRequest) (*models.User, error) {
 	hashedPassword, err := utils.HashPassword(req.Password)
 
 	if err != nil {
@@ -27,7 +27,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 	}
 
 	user := &models.User{
-		Name:      uuid.NewString(),
+		Name:      req.Name,
 		Email:     req.Email,
 		Password:  hashedPassword,
 		CreatedAt: time.Now(),
@@ -50,4 +50,33 @@ func (s *UserService) GetUserByID(ctx context.Context, id string) (*models.User,
 	}
 
 	return user, nil
+}
+
+func (s *UserService) UpdateUser(ctx context.Context, id string, req *models.UserUpdateRequest) (*models.User, error) {
+	userUpdate := models.UserUpdate{
+		LastUpdated: pgtype.Timestamp{Time: time.Now(), Valid: true},
+	}
+
+	if req.Name != "" {
+		userUpdate.Name = pgtype.Text{String: req.Name, Valid: true}
+	}
+
+	if req.Email != "" {
+		userUpdate.Email = pgtype.Text{String: req.Email, Valid: true}
+	}
+
+	if req.Password != "" {
+		hashedPassword, err := utils.HashPassword(req.Password)
+		if err != nil {
+			return nil, fmt.Errorf("hashing failed: %w", err)
+		}
+		userUpdate.Password = pgtype.Text{String: hashedPassword, Valid: true}
+	}
+
+	updatedUser, err := s.repo.UpdateUser(ctx, id, &userUpdate)
+	if err != nil {
+		return nil, fmt.Errorf("repository failed: %w", err)
+	}
+
+	return updatedUser, nil
 }

@@ -40,15 +40,6 @@ func sendGetRequest(url string) *http.Response {
 	return response
 }
 
-func decodeJson(response *http.Response) map[string]interface{} {
-	var result map[string]interface{}
-	err := json.NewDecoder(response.Body).Decode(&result)
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
 // TestCreateUserSuccess tests if the user creation is successful.
 func TestCreateUserSuccess(t *testing.T) {
 	body := BodyStruct{
@@ -59,14 +50,13 @@ func TestCreateUserSuccess(t *testing.T) {
 
 	jsonData := initiateBody(body)
 	response := sendPostRequest("http://localhost:8080/api/v1/users", jsonData)
-	result := decodeJson(response)
 
 	defer response.Body.Close()
 
-	if result["message"] != successMessage {
-		logMessage := fmt.Sprintf("expected message: %s, got: %s", successMessage, result["message"])
+	if response.StatusCode != http.StatusOK {
+		logMessage := fmt.Sprintf("expected status code: %d, got: %d", http.StatusOK, response.StatusCode)
 		t.Log(logMessage)
-		t.Fatal("user was not created successfully")
+		t.Fatal("user was not found")
 	}
 }
 
@@ -80,17 +70,17 @@ func TestCreateUserFailure(t *testing.T) {
 
 	jsonData := initiateBody(body)
 	response := sendPostRequest("http://localhost:8080/api/v1/users", jsonData)
-	result := decodeJson(response)
 
 	defer response.Body.Close()
 
-	if result["message"] == successMessage {
-		logMessage := fmt.Sprintf("expected a error, got: %s", result["message"])
+	if response.StatusCode != http.StatusOK {
+		logMessage := fmt.Sprintf("expected status code: %d, got: %d", http.StatusOK, response.StatusCode)
 		t.Log(logMessage)
-		t.Fatal("user was created successfully!")
+		t.Fatal("user was not found")
 	}
 }
 
+// TestGetUserByIDSuccess tests if the user is found by ID.
 func TestGetUserByIDSuccess(t *testing.T) {
 	userId := "6a5452c9-e5b3-482a-8349-c3f4as44e4aa"
 	url := fmt.Sprintf("http://localhost:8080/api/v1/users/%s", userId)

@@ -17,9 +17,9 @@ func CreateUserHandler(service *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(ctx *gin.Context) {
-	var user models.CreateUserRequest
+	var userRequest models.UserRequest
 
-	err := ctx.ShouldBindJSON(&user)
+	err := ctx.ShouldBindJSON(&userRequest)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -28,7 +28,7 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	_, err = h.service.CreateUser(ctx, &user)
+	_, err = h.service.CreateUser(ctx, &userRequest)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -46,6 +46,33 @@ func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
 	user, err := h.service.GetUserByID(ctx, userId)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"user": user,
+	})
+}
+
+func (h *UserHandler) UpdateUser(ctx *gin.Context) {
+	var userRequest models.UserUpdateRequest
+	userId := ctx.Param("id")
+
+	err := ctx.ShouldBindJSON(&userRequest)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	user, err := h.service.UpdateUser(ctx, userId, &userRequest)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
