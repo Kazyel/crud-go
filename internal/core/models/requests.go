@@ -1,13 +1,13 @@
 package models
 
 type UserRequest struct {
-	Name     string `json:"name" validate:"required,min=2"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Name     string `json:"name" binding:"required,min=3,max=100"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8,max=72"`
 }
 
 type UserUpdateRequest struct {
-	Name     string `json:"name,omitempty" validate:"required,min=2"`
-	Email    string `json:"email,omitempty" validate:"required,email"`
-	Password string `json:"password,omitempty" validate:"required,min=8"`
+	Name     string `json:"name,omitempty" binding:"omitempty,min=3"`
+	Email    string `json:"email,omitempty" binding:"omitempty,email"`
+	Password string `json:"password,omitempty" binding:"omitempty,min=8,max=72"`
 }

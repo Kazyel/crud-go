@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"rest-crud-go/internal/core/models"
 	"rest-crud-go/internal/core/services"
+	"rest-crud-go/internal/core/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,9 +23,7 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&userRequest)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		utils.HandleBindingError(ctx, err)
 		return
 	}
 
@@ -66,9 +65,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&userRequest)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		utils.HandleBindingError(ctx, err)
 		return
 	}
 
