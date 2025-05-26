@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	memory  = 64 * 1024
-	time    = 3
-	threads = 2
-	keyLen  = 32
-	saltLen = 16
+	memory    = 64 * 1024
+	timestamp = 3
+	threads   = 2
+	keyLen    = 32
+	saltLen   = 16
 )
 
 func HashPassword(password string) (string, error) {
@@ -25,12 +25,12 @@ func HashPassword(password string) (string, error) {
 		return "", err
 	}
 
-	hash := argon2.IDKey([]byte(password), salt, time, memory, threads, keyLen)
+	hash := argon2.IDKey([]byte(password), salt, timestamp, memory, threads, keyLen)
 
 	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
 	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
 
-	return fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memory, time, threads, saltB64, hashB64), nil
+	return fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memory, timestamp, threads, saltB64, hashB64), nil
 }
 
 func VerifyPassword(password, encodedHash string) (bool, error) {

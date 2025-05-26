@@ -11,3 +11,8 @@ type UserUpdateRequest struct {
 	Email    string `json:"email,omitempty" binding:"omitempty,email"`
 	Password string `json:"password,omitempty" binding:"omitempty,min=8,max=72"`
 }
+
+type UserLoginRequest struct {
+	Email    string `json:"email" binding:"email"`
+	Password string `json:"password"`
+}

@@ -13,9 +13,6 @@ build/
 dist/
 *.log
 
-# Migrations
-migrations/
-
 # Dependency directories (if vendoring)
 vendor/
 

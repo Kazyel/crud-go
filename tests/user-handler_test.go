@@ -14,8 +14,6 @@ type BodyStruct struct {
 	Password string `json:"password"`
 }
 
-const successMessage = "user created successfully!"
-
 func initiateBody(body BodyStruct) []byte {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
@@ -41,7 +39,7 @@ func sendGetRequest(url string) *http.Response {
 }
 
 // TestCreateUserSuccess tests if the user creation is successful.
-func TestCreateUserSuccess(t *testing.T) {
+func TestVCreateUserSuccess(t *testing.T) {
 	body := BodyStruct{
 		Name:     "kazyel",
 		Email:    "kazyel@gmail.com",
@@ -61,7 +59,7 @@ func TestCreateUserSuccess(t *testing.T) {
 }
 
 // TestCreateUserFailure tests if the user creation fails when the user already exists.
-func TestCreateUserFailure(t *testing.T) {
+func TestVCreateUserFailure(t *testing.T) {
 	body := BodyStruct{
 		Name:     "kazyel",
 		Email:    "kazyel@gmail.com",
@@ -81,7 +79,7 @@ func TestCreateUserFailure(t *testing.T) {
 }
 
 // TestGetUserByIDSuccess tests if the user is found by ID.
-func TestGetUserByIDSuccess(t *testing.T) {
+func TestVGetUserByIDSuccess(t *testing.T) {
 	userId := "6a5452c9-e5b3-482a-8349-c3f4as44e4aa"
 	url := fmt.Sprintf("http://localhost:8080/api/v1/users/%s", userId)
 

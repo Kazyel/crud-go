@@ -10,6 +10,7 @@ import (
 
 type UserRepository interface {
 	GetUserByID(context context.Context, id string) (*models.User, error)
+	GetUserByEmail(context context.Context, email string) (string, error)
 	GetAllUsers(context context.Context, limit, offset int) ([]models.UsersData, error)
 	CreateUser(context context.Context, user *models.User) error
 	UpdateUser(context context.Context, id string, user *models.UserUpdate) (*models.User, error)
@@ -39,6 +40,22 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 	return nil
 }
 
+func (r *userRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error) {
+	query := `
+	SELECT id, name, email FROM users
+	LIMIT $1 OFFSET $2
+	`
+	rows, err := r.db.Query(ctx, query, limit, offset)
+
+	if err != nil {
+		return nil, fmt.Errorf("error getting all users: %w", err)
+	}
+
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.UsersData])
+}
+
 func (r *userRepository) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	query := `
 		SELECT id, name, email, created_at 
@@ -64,6 +81,30 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*models.Us
 	}
 
 	return &user, nil
+}
+
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (string, error) {
+	query := `
+		SELECT id
+		FROM users 
+		WHERE email = $1		
+	`
+
+	var userId string
+
+	err := r.db.QueryRow(ctx, query, email).Scan(
+		&userId,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", fmt.Errorf("user with email %s not found", email)
+		}
+
+		return "", fmt.Errorf("error querying user by email: %w", err)
+	}
+
+	return userId, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) (*models.User, error) {
@@ -118,20 +159,4 @@ func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	return nil
-}
-
-func (r *userRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error) {
-	query := `
-	SELECT id, name, email FROM users
-	LIMIT $1 OFFSET $2
-	`
-	rows, err := r.db.Query(ctx, query, limit, offset)
-
-	if err != nil {
-		return nil, fmt.Errorf("error getting all users: %w", err)
-	}
-
-	defer rows.Close()
-
-	return pgx.CollectRows(rows, pgx.RowToStructByName[models.UsersData])
 }
