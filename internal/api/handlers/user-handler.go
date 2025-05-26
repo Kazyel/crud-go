@@ -130,29 +130,3 @@ func (h *UserHandler) GetAllUsers(ctx *gin.Context) {
 		"message": users,
 	})
 }
-
-func (h *UserHandler) UserLogin(ctx *gin.Context) {
-	var loginRequest models.UserLoginRequest
-
-	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	id, token, err := h.service.UserLogin(ctx, loginRequest)
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"user":    id,
-		"token":   token,
-		"message": "logged in successfully!",
-	})
-}

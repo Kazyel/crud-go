@@ -8,30 +8,35 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type UserRepository interface {
-	GetUserByID(context context.Context, id string) (*models.User, error)
-	GetUserByEmail(context context.Context, email string) (string, error)
-	GetAllUsers(context context.Context, limit, offset int) ([]models.UsersData, error)
-	CreateUser(context context.Context, user *models.User) error
-	UpdateUser(context context.Context, id string, user *models.UserUpdate) (*models.User, error)
-	DeleteUser(context context.Context, id string) error
-}
-
 type userRepository struct {
 	db *pgx.Conn
+}
+
+type userCredentials struct {
+	ID       string
+	Password string
+}
+
+type UserRepository interface {
+	GetUserByID(context context.Context, id string) (*models.User, error)
+	GetUserByEmail(context context.Context, userRequest models.UserLoginRequest) (userCredentials, error)
+	GetAllUsers(context context.Context, limit, offset int) ([]models.UsersData, error)
+	CreateUser(context context.Context, user *models.User) error
+	UpdateUser(context context.Context, id string, userRequest *models.UserUpdate) (*models.User, error)
+	DeleteUser(context context.Context, id string) error
 }
 
 func CreateUserRepository(db *pgx.Conn) *userRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) CreateUser(ctx context.Context, user *models.User) error {
+func (r *userRepository) CreateUser(ctx context.Context, userRequest *models.User) error {
 	query := `
 				INSERT INTO users (name, email, password_hash, created_at) 
 				VALUES ($1, $2, $3, $4)
 				`
 
-	_, err := r.db.Exec(ctx, query, user.Name, user.Email, user.Password, user.LastUpdated)
+	_, err := r.db.Exec(ctx, query, userRequest.Name, userRequest.Email, userRequest.Password, userRequest.LastUpdated)
 
 	if err != nil {
 		return fmt.Errorf("error creating user: %w", err)
@@ -83,28 +88,29 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*models.Us
 	return &user, nil
 }
 
-func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (string, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, userRequest models.UserLoginRequest) (userCredentials, error) {
 	query := `
-		SELECT id
+		SELECT id, password_hash
 		FROM users 
 		WHERE email = $1		
 	`
 
-	var userId string
+	user := userCredentials{}
 
-	err := r.db.QueryRow(ctx, query, email).Scan(
-		&userId,
+	err := r.db.QueryRow(ctx, query, userRequest.Email).Scan(
+		&user.ID,
+		&user.Password,
 	)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return "", fmt.Errorf("user with email %s not found", email)
+			return userCredentials{}, fmt.Errorf("user with email %s not found", userRequest.Email)
 		}
 
-		return "", fmt.Errorf("error querying user by email: %w", err)
+		return userCredentials{}, fmt.Errorf("error querying user by email: %w", err)
 	}
 
-	return userId, nil
+	return user, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) (*models.User, error) {

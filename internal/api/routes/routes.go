@@ -13,9 +13,14 @@ func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute.GET("/all", handler.GetAllUsers)
 
 	userRoute.POST("/", handler.CreateUser)
-	userRoute.POST("/login", handler.UserLogin)
 
 	userRoute.PATCH("/:id", handler.UpdateUser)
 
 	userRoute.DELETE("/:id", handler.DeleteUser)
+}
+
+func AuthRoutes(router *gin.Engine, handler *handlers.AuthHandler) {
+	authRoute := router.Group("/api/v1/auth")
+
+	authRoute.POST("/login", handler.Login)
 }

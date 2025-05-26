@@ -106,19 +106,3 @@ func (s *UserService) GetAllUsers(ctx context.Context, limit, offset int) ([]mod
 
 	return users, nil
 }
-
-func (s *UserService) UserLogin(ctx context.Context, request models.UserLoginRequest) (string, string, error) {
-	id, err := s.repo.GetUserByEmail(ctx, request.Email)
-
-	if err != nil {
-		return "", "", fmt.Errorf("repository failed: %w", err)
-	}
-
-	newToken, err := utils.GenerateJWT(id)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	return id, newToken, nil
-}

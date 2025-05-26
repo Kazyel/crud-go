@@ -28,11 +28,17 @@ func setupDatabase() *pgx.Conn {
 
 func setupRouter(db *pgx.Conn) *gin.Engine {
 	router := gin.Default()
+
 	userRepo := repositories.CreateUserRepository(db)
+
+	authService := services.CreateAuthService(userRepo)
 	userService := services.CreateUserService(userRepo)
+
 	userHandler := handlers.CreateUserHandler(userService)
+	authHandler := handlers.CreateAuthHandler(authService)
 
 	routes.UserRoutes(router, userHandler)
+	routes.AuthRoutes(router, authHandler)
 
 	return router
 }
