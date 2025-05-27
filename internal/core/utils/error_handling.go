@@ -42,12 +42,12 @@ func HandleBindingError(c *gin.Context, err error) {
 			out[i] = ApiError{fe.Field(), getErrorMessage(fe)}
 		}
 
-		c.JSON(http.StatusBadRequest, gin.H{"errors": out})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": out})
 	} else if errors.Is(err, io.EOF) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 	} else if errors.Is(err, &json.UnmarshalTypeError{}) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid type provided"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid type provided"})
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }

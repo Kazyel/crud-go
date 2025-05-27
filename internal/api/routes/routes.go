@@ -9,16 +9,16 @@ import (
 
 func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute := router.Group("/api/v1/users")
-	userRoute.Use(middlewares.AuthTokenMiddleware())
+	userRoute.Use()
 
-	userRoute.GET("/:id", handler.GetUserByID)
-	userRoute.GET("/all", handler.GetAllUsers)
+	userRoute.GET("/:id", middlewares.AuthBearerToken(), handler.GetUserByID)
+	userRoute.GET("/all", middlewares.AuthBearerToken(), handler.GetAllUsers)
 
 	userRoute.POST("/", handler.CreateUser)
 
-	userRoute.PATCH("/:id", handler.UpdateUser)
+	userRoute.PATCH("/:id", middlewares.AuthBearerToken(), handler.UpdateUser)
 
-	userRoute.DELETE("/:id", handler.DeleteUser)
+	userRoute.DELETE("/:id", middlewares.AuthBearerToken(), handler.DeleteUser)
 }
 
 func AuthRoutes(router *gin.Engine, handler *handlers.AuthHandler) {

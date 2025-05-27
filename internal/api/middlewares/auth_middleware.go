@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthTokenMiddleware() gin.HandlerFunc {
+func AuthBearerToken() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		authHeader := ctx.GetHeader("Authorization")

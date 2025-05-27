@@ -20,19 +20,17 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 	var loginRequest models.UserLoginRequest
 
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
-		return
 	}
 
 	id, token, err := auth.service.Login(ctx, loginRequest)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
-		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
