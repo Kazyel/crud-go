@@ -2,12 +2,14 @@ package routes
 
 import (
 	"rest-crud-go/internal/api/handlers"
+	"rest-crud-go/internal/api/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute := router.Group("/api/v1/users")
+	userRoute.Use(middlewares.AuthTokenMiddleware())
 
 	userRoute.GET("/:id", handler.GetUserByID)
 	userRoute.GET("/all", handler.GetAllUsers)
