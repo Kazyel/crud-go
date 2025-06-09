@@ -34,7 +34,7 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -51,7 +51,7 @@ func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -73,7 +73,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -87,7 +87,7 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 
 	if err := h.service.DeleteUser(ctx, userId); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -118,7 +118,7 @@ func (h *UserHandler) GetAllUsers(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 	}
 

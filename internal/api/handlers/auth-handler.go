@@ -34,7 +34,7 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	ctx.SetCookie(
-		"auth_token",
+		"jwt",
 		userTokens.JWTToken,
 		86400,
 		"/",
@@ -44,8 +44,22 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 	)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":    "Login successful",
+		"message":    "login successful",
 		"csrf_token": userTokens.CSRFToken,
 		"user_id":    userTokens.UserID,
 	})
+}
+
+func (auth *AuthHandler) Logout(ctx *gin.Context) {
+	ctx.SetCookie(
+		"auth_token",
+		"",
+		-1,
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }

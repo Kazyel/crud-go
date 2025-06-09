@@ -9,7 +9,6 @@ import (
 
 func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute := router.Group("/api/v1/users")
-	userRoute.Use()
 
 	userRoute.GET("/:id", middlewares.AuthJWT(), handler.GetUserByID)
 	userRoute.GET("/all", middlewares.AuthJWT(), handler.GetAllUsers)
@@ -25,4 +24,5 @@ func AuthRoutes(router *gin.Engine, handler *handlers.AuthHandler) {
 	authRoute := router.Group("/api/v1/auth")
 
 	authRoute.POST("/login", handler.Login)
+	authRoute.POST("/logout", handler.Logout)
 }

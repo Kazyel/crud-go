@@ -7,25 +7,25 @@ import (
 )
 
 func TestVGenerateJWT(t *testing.T) {
-	id, err := utils.GenerateJWT("kazyel")
+	jwtToken, csrfToken, err := utils.GenerateJWT("kazyel")
 
 	if err != nil {
 		t.Errorf("error generating JWT: %v", err)
 	}
 
-	fmt.Println(id)
+	fmt.Println(jwtToken, csrfToken)
 }
 
 func TestVParsingJWT(t *testing.T) {
-	token, err := utils.GenerateJWT("kazyel")
+	jwtToken, csrfToken, err := utils.GenerateJWT("kazyel")
 
-	fmt.Println(token)
+	fmt.Println(jwtToken, csrfToken)
 
 	if err != nil {
 		t.Errorf("error generating JWT: %v", err)
 	}
 
-	id, err := utils.ParseJWT(token)
+	id, err := utils.ParseJWT(jwtToken)
 
 	if err != nil {
 		t.Errorf("error parsing JWT: %v", err)
