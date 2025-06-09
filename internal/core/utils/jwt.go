@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"time"
@@ -8,42 +10,79 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var key string = os.Getenv("JWT_KEY")
-
-func GenerateJWT(userId string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
-		Issuer:    "rest-crud-go",
-		Subject:   userId,
-	})
-
-	signedString, err := token.SignedString([]byte(key))
-
-	if err != nil {
-		return "", fmt.Errorf("error generating a json web token")
-	}
-
-	return signedString, nil
+type CustomClaims struct {
+	UserID    string `json:"user_id"`
+	CSRFToken string `json:"csrf_token"`
+	jwt.RegisteredClaims
 }
 
-func ParseJWT(token string) (string, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
-		return []byte(key), nil
+func getJWTKey() []byte {
+	key := os.Getenv("JWT_KEY")
+	if key == "" {
+		panic("JWT_KEY environment variable is required")
+	}
+	return []byte(key)
+}
+
+func GenerateCSRFToken() (string, error) {
+	bytes := make([]byte, 32)
+
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(bytes), nil
+}
+
+func GenerateJWT(userId string) (string, string, error) {
+	csrfToken, err := GenerateCSRFToken()
+
+	if err != nil {
+		return "", "", fmt.Errorf("error generating CSRF token: %w", err)
+	}
+
+	claims := CustomClaims{
+		UserID:    userId,
+		CSRFToken: csrfToken,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			Issuer:    "rest-crud-go",
+			Subject:   userId,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedString, err := token.SignedString([]byte(getJWTKey()))
+
+	if err != nil {
+		return "", "", fmt.Errorf("error generating JWT: %w", err)
+	}
+
+	return signedString, csrfToken, nil
+}
+
+func ParseJWT(token string) (*CustomClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &CustomClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(getJWTKey()), nil
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("error parsing JWT: %w", err)
+		return nil, fmt.Errorf("error parsing JWT: %w", err)
 	}
 
-	claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims)
+	if !parsedToken.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	claims, ok := parsedToken.Claims.(*CustomClaims)
 
 	if !ok {
-		return "", fmt.Errorf("error parsing JWT claims: %w", err)
+		return nil, fmt.Errorf("error parsing JWT claims: %w", err)
 	}
 
-	if claims.ExpiresAt.Before(time.Now()) {
-		return "", fmt.Errorf("token expired")
-	}
-
-	return claims.Subject, nil
+	return claims, nil
 }

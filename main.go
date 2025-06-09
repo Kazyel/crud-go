@@ -28,6 +28,20 @@ func setupDatabase() *pgx.Conn {
 
 func setupRouter(db *pgx.Conn) *gin.Engine {
 	router := gin.Default()
+	router.Use(func(ctx *gin.Context) {
+		ctx.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+		ctx.Header("Access-Control-Allow-Credentials", "true")
+		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
+		ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+		if ctx.Request.Method == "OPTIONS" {
+			ctx.AbortWithStatus(204)
+			return
+		}
+
+		ctx.Next()
+
+	})
 
 	userRepo := repositories.CreateUserRepository(db)
 

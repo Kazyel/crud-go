@@ -3,45 +3,41 @@ package middlewares
 import (
 	"net/http"
 	"rest-crud-go/internal/core/utils"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthBearerToken() gin.HandlerFunc {
+func AuthJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
-		authHeader := ctx.GetHeader("Authorization")
-
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "Unauthorized access",
-				"message": "Missing or invalid bearer token, please provide a valid token"})
-			return
-		}
-
-		bearerToken := strings.TrimPrefix(authHeader, "Bearer ")
-
-		if bearerToken == "" {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "Invalid token",
-				"message": "The provided token is empty",
-			})
-			return
-		}
-
-		userId, err := utils.ParseJWT(bearerToken)
+		tokenCookie, err := ctx.Cookie("auth_token")
 
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "Invalid token",
-				"message": "The provided token is invalid",
+				"error": "Missing authentication token",
 			})
 			return
 		}
 
-		ctx.Set("authToken", bearerToken)
-		ctx.Set("userId", userId)
+		claims, err := utils.ParseJWT(tokenCookie)
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalind token",
+			})
+			return
+		}
+
+		csrfToken := ctx.GetHeader("X-CSRF-Token")
+
+		if csrfToken == "" {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "Missing CSRF token",
+			})
+			return
+		}
+
+		ctx.Set("userId", claims.UserID)
+		ctx.Set("csrfToken", claims.CSRFToken)
 		ctx.Next()
 	}
 }

@@ -11,14 +11,14 @@ func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute := router.Group("/api/v1/users")
 	userRoute.Use()
 
-	userRoute.GET("/:id", middlewares.AuthBearerToken(), handler.GetUserByID)
-	userRoute.GET("/all", middlewares.AuthBearerToken(), handler.GetAllUsers)
+	userRoute.GET("/:id", middlewares.AuthJWT(), handler.GetUserByID)
+	userRoute.GET("/all", middlewares.AuthJWT(), handler.GetAllUsers)
 
 	userRoute.POST("/", handler.CreateUser)
 
-	userRoute.PATCH("/:id", middlewares.AuthBearerToken(), handler.UpdateUser)
+	userRoute.PATCH("/:id", middlewares.AuthJWT(), handler.UpdateUser)
 
-	userRoute.DELETE("/:id", middlewares.AuthBearerToken(), handler.DeleteUser)
+	userRoute.DELETE("/:id", middlewares.AuthJWT(), handler.DeleteUser)
 }
 
 func AuthRoutes(router *gin.Engine, handler *handlers.AuthHandler) {

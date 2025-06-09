@@ -12,32 +12,44 @@ type AuthService struct {
 	repo repositories.UserRepository
 }
 
+type UserTokens struct {
+	JWTToken  string
+	CSRFToken string
+	UserID    string
+}
+
 func CreateAuthService(repo repositories.UserRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) Login(ctx context.Context, request models.UserLoginRequest) (string, string, error) {
+func (s *AuthService) Login(ctx context.Context, request models.UserLoginRequest) (*UserTokens, error) {
 	user, err := s.repo.GetUserByEmail(ctx, request)
 
 	if err != nil {
-		return "", "", fmt.Errorf("repository failed: %w", err)
+		return nil, fmt.Errorf("repository failed: %w", err)
 	}
 
 	ok, err := utils.VerifyPassword(request.Password, user.Password)
 
 	if err != nil {
-		return "", "", fmt.Errorf("error verifying password: %w", err)
+		return nil, fmt.Errorf("error verifying password: %w", err)
 	}
 
 	if !ok {
-		return "", "", fmt.Errorf("invalid password")
+		return nil, fmt.Errorf("invalid password")
 	}
 
-	newToken, err := utils.GenerateJWT(user.ID)
+	jwtToken, csrfToken, err := utils.GenerateJWT(user.ID)
 
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return user.ID, newToken, nil
+	userTokens := UserTokens{
+		JWTToken:  jwtToken,
+		CSRFToken: csrfToken,
+		UserID:    user.ID,
+	}
+
+	return &userTokens, nil
 }

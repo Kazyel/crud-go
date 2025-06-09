@@ -21,21 +21,31 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 	}
 
-	id, token, err := auth.service.Login(ctx, loginRequest)
+	userTokens, err := auth.service.Login(ctx, loginRequest)
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 	}
 
+	ctx.SetCookie(
+		"auth_token",
+		userTokens.JWTToken,
+		86400,
+		"/",
+		"",
+		true,
+		true,
+	)
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"user":    id,
-		"token":   token,
-		"message": "logged in successfully!",
+		"message":    "Login successful",
+		"csrf_token": userTokens.CSRFToken,
+		"user_id":    userTokens.UserID,
 	})
 }
