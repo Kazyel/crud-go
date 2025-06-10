@@ -36,7 +36,6 @@ func GenerateCSRFToken() (string, error) {
 
 func GenerateJWT(userId string) (string, string, error) {
 	csrfToken, err := GenerateCSRFToken()
-
 	if err != nil {
 		return "", "", fmt.Errorf("error generating CSRF token: %w", err)
 	}
@@ -52,8 +51,8 @@ func GenerateJWT(userId string) (string, string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedString, err := token.SignedString([]byte(getJWTKey()))
 
+	signedString, err := token.SignedString([]byte(getJWTKey()))
 	if err != nil {
 		return "", "", fmt.Errorf("error generating JWT: %w", err)
 	}
@@ -79,7 +78,6 @@ func ParseJWT(token string) (*CustomClaims, error) {
 	}
 
 	claims, ok := parsedToken.Claims.(*CustomClaims)
-
 	if !ok {
 		return nil, fmt.Errorf("error parsing JWT claims: %w", err)
 	}

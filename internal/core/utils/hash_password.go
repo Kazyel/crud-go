@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -26,17 +25,16 @@ func HashPassword(password string) (string, error) {
 	}
 
 	hash := argon2.IDKey([]byte(password), salt, timestamp, memory, threads, keyLen)
-
 	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
 	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
 
 	return fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memory, timestamp, threads, saltB64, hashB64), nil
 }
 
-func VerifyPassword(password, encodedHash string) (bool, error) {
+func VerifyPassword(password, encodedHash string) bool {
 	parts := strings.Split(encodedHash, "$")
 	if len(parts) != 6 {
-		return false, errors.New("invalid hash format")
+		return false
 	}
 
 	var mem, t uint32
@@ -44,26 +42,22 @@ func VerifyPassword(password, encodedHash string) (bool, error) {
 
 	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &mem, &t, &p)
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	decodedHash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	hash := argon2.IDKey([]byte(password), salt, t, mem, p, uint32(len(decodedHash)))
 
-	if !compareHash(hash, decodedHash) {
-		return false, nil
-	}
-
-	return true, nil
+	return compareHash(hash, decodedHash)
 }
 
 func compareHash(a, b []byte) bool {

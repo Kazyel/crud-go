@@ -18,6 +18,31 @@ type Pagination struct {
 	Offset int `form:"offset" binding:"omitempty,gt=0,lte=100"`
 }
 
+type APIResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
+type PaginatedResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+	Meta    MetaData    `json:"meta"`
+}
+
+type MetaData struct {
+	Total  int `json:"total"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+const (
+	defaultLimit  = 10
+	defaultOffset = 0
+	maxLimit      = 100
+)
+
 func CreateUserHandler(service *services.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
@@ -30,34 +55,50 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	_, err := h.service.CreateUser(ctx, &userRequest)
-
+	userId, err := h.service.CreateUser(ctx, &userRequest)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "user created successfully!",
+	ctx.JSON(http.StatusCreated, APIResponse{
+		Success: true,
+		Message: "User created successfully!",
+		Data: gin.H{
+			"user_id": userId,
+		},
 	})
 }
 
 func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
-	user, err := h.service.GetUserByID(ctx, userId)
-
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   "User ID is required",
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"user": user,
+	userData, err := h.service.GetUserByID(ctx, userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		},
+		)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Data: gin.H{
+			"user_data": userData,
+		},
 	})
 }
 
@@ -65,25 +106,47 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	var userRequest models.UserUpdateRequest
 	userId := ctx.Param("id")
 
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   "User ID is required",
+		})
+		return
+	}
+
 	if err := ctx.ShouldBindJSON(&userRequest); err != nil {
 		utils.HandleBindingError(ctx, err)
+		return
 	}
 
-	user, err := h.service.UpdateUser(ctx, userId, &userRequest)
-
+	updateUser, err := h.service.UpdateUser(ctx, userId, &userRequest)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
 		})
+		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"user": user,
+	ctx.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Message: "User updated successfully",
+		Data: gin.H{
+			"user": updateUser,
+		},
 	})
 }
 
 func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
+
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   "User ID is required",
+		})
+		return
+	}
 
 	if err := h.service.DeleteUser(ctx, userId); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -91,38 +154,59 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 		})
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "user deleted successfully!",
+	ctx.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Message: "User deleted successfully",
 	})
 }
 
 func (h *UserHandler) GetAllUsers(ctx *gin.Context) {
 	var page Pagination
-	var LIMIT int = 15
-	var OFFSET int = 0
 
 	if err := ctx.ShouldBindQuery(&page); err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		ctx.AbortWithStatusJSON(400, APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
 		return
 	}
 
-	if page.Limit != 0 {
-		LIMIT = page.Limit
-	}
+	limit, offset := h.sanitizePagination(page)
 
-	if page.Offset != 0 {
-		OFFSET = page.Offset
-	}
-
-	users, err := h.service.GetAllUsers(ctx, LIMIT, OFFSET)
-
+	users, err := h.service.GetAllUsers(ctx, limit, offset)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
 		})
+		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": users,
+	ctx.JSON(http.StatusOK, PaginatedResponse{
+		Success: true,
+		Data:    users,
+		Meta: MetaData{
+			Total:  len(users),
+			Limit:  limit,
+			Offset: offset,
+		},
 	})
+}
+
+func (h *UserHandler) sanitizePagination(page Pagination) (int, int) {
+	limit := page.Limit
+	offset := page.Offset
+
+	if limit == 0 {
+		limit = defaultLimit
+	}
+	if offset < 0 {
+		offset = defaultOffset
+	}
+
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	return limit, offset
 }

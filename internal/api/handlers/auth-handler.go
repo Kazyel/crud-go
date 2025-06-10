@@ -20,16 +20,17 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 	var loginRequest models.UserLoginRequest
 
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
 		})
 	}
 
-	userTokens, err := auth.service.Login(ctx, loginRequest)
-
+	userTokens, err := auth.service.AuthenticaUser(ctx, loginRequest)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
+			Success: false,
+			Error:   err.Error(),
 		})
 	}
 
@@ -43,16 +44,18 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 		true,
 	)
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message":    "login successful",
-		"csrf_token": userTokens.CSRFToken,
-		"user_id":    userTokens.UserID,
-	})
+	ctx.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Message: "Login successful",
+		Data: gin.H{
+			"csrf_token": userTokens.CSRFToken,
+			"user_id":    userTokens.UserID,
+		}})
 }
 
 func (auth *AuthHandler) Logout(ctx *gin.Context) {
 	ctx.SetCookie(
-		"auth_token",
+		"jwt",
 		"",
 		-1,
 		"/",
@@ -61,5 +64,8 @@ func (auth *AuthHandler) Logout(ctx *gin.Context) {
 		true,
 	)
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
+	ctx.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Message: "Logged out successfully",
+	})
 }

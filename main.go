@@ -11,12 +11,12 @@ import (
 	"rest-crud-go/internal/core/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-func setupDatabase() *pgx.Conn {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+func setupDatabase() *pgxpool.Pool {
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
@@ -26,7 +26,7 @@ func setupDatabase() *pgx.Conn {
 	return conn
 }
 
-func setupRouter(db *pgx.Conn) *gin.Engine {
+func setupRouter(db *pgxpool.Pool) *gin.Engine {
 	router := gin.Default()
 	router.Use(func(ctx *gin.Context) {
 		ctx.Header("Access-Control-Allow-Origin", "http://localhost:3000")
@@ -67,7 +67,7 @@ func main() {
 	database := setupDatabase()
 	router := setupRouter(database)
 
-	defer database.Close(context.Background())
+	defer database.Close()
 
 	router.Run(":8080")
 	fmt.Println("Server started.")

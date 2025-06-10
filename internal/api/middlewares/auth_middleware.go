@@ -9,7 +9,7 @@ import (
 
 func AuthJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		tokenCookie, err := ctx.Cookie("auth_token")
+		tokenCookie, err := ctx.Cookie("jwt")
 
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

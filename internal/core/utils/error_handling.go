@@ -9,12 +9,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type ApiError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
 }
+
+var (
+	ErrHashingFailed       = errors.New("password hashing failed")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrUserExists          = errors.New("user already exists")
+	UniqueViolationErrCode = "23505"
+)
 
 func getErrorMessage(fe validator.FieldError) string {
 	switch fe.Tag() {
@@ -50,4 +58,10 @@ func HandleBindingError(c *gin.Context, err error) {
 	} else {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
+}
+
+func IsPgError(err error, errorCode string) bool {
+	var pgErr *pgconn.PgError
+	errors.As(err, &pgErr)
+	return pgErr.Code == errorCode
 }

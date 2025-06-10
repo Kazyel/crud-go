@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
@@ -16,14 +14,15 @@ type User struct {
 }
 
 type UserUpdate struct {
-	Name        pgtype.Text      `json:"name,omitempty"`
-	Email       pgtype.Text      `json:"email,omitempty"`
-	Password    pgtype.Text      `json:"-"`
-	LastUpdated pgtype.Timestamp `json:"-"`
+	Name        *string   `json:"name,omitempty"`
+	Email       *string   `json:"email,omitempty"`
+	Password    *string   `json:"-"`
+	LastUpdated time.Time `json:"-"`
 }
 
 type UsersData struct {
-	ID    string `json:"id" db:"id"`
-	Name  string `json:"name" db:"name"`
-	Email string `json:"email" db:"email"`
+	ID        string    `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	Email     string    `json:"email" db:"email"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }

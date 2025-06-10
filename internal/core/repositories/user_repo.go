@@ -2,90 +2,107 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"rest-crud-go/internal/core/models"
+	"rest-crud-go/internal/core/utils"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type UserRepository interface {
+	GetUserByID(ctx context.Context, id string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, userRequest models.UserLoginRequest) (userCredentials, error)
+	GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error)
+	CreateUser(ctx context.Context, user *models.User) error
+	UpdateUser(ctx context.Context, id string, userRequest *models.UserUpdate) (*models.User, error)
+	DeleteUser(ctx context.Context, id string) error
+}
+
 type userRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 type userCredentials struct {
-	ID       string
-	Password string
+	ID       string `db:"id"`
+	Password string `db:"password_hash"`
 }
 
-type UserRepository interface {
-	GetUserByID(context context.Context, id string) (*models.User, error)
-	GetUserByEmail(context context.Context, userRequest models.UserLoginRequest) (userCredentials, error)
-	GetAllUsers(context context.Context, limit, offset int) ([]models.UsersData, error)
-	CreateUser(context context.Context, user *models.User) error
-	UpdateUser(context context.Context, id string, userRequest *models.UserUpdate) (*models.User, error)
-	DeleteUser(context context.Context, id string) error
-}
-
-func CreateUserRepository(db *pgx.Conn) *userRepository {
+func CreateUserRepository(db *pgxpool.Pool) UserRepository {
 	return &userRepository{db: db}
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, userRequest *models.User) error {
 	query := `
-				INSERT INTO users (name, email, password_hash, created_at) 
-				VALUES ($1, $2, $3, $4)
-				`
+		INSERT INTO users (name, email, password_hash)
+		VALUES ($1, $2, $3)
+		RETURNING id`
 
-	_, err := r.db.Exec(ctx, query, userRequest.Name, userRequest.Email, userRequest.Password, userRequest.LastUpdated)
+	var id string
+	err := r.db.QueryRow(ctx, query,
+		userRequest.Name,
+		userRequest.Email,
+		userRequest.Password,
+	).Scan(&id)
 
 	if err != nil {
+		if utils.IsPgError(err, utils.UniqueViolationErrCode) {
+			return utils.ErrUserExists
+		}
 		return fmt.Errorf("error creating user: %w", err)
 	}
 
+	userRequest.ID = id
 	return nil
 }
 
 func (r *userRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]models.UsersData, error) {
 	query := `
-	SELECT id, name, email FROM users
-	LIMIT $1 OFFSET $2
+		SELECT id, name, email, created_at 
+		FROM users 
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
 	`
 	rows, err := r.db.Query(ctx, query, limit, offset)
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting all users: %w", err)
 	}
 
 	defer rows.Close()
 
-	return pgx.CollectRows(rows, pgx.RowToStructByName[models.UsersData])
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.UsersData])
+	if err != nil {
+		return nil, fmt.Errorf("error collecting user rows: %w", err)
+	}
+
+	return users, nil
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	query := `
-		SELECT id, name, email, created_at 
+		SELECT id, name, email, created_at, last_updated
 		FROM users 
 		WHERE id = $1		
 	`
 
-	user := models.User{}
-
+	user := &models.User{}
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Email,
 		&user.CreatedAt,
+		&user.LastUpdated,
 	)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("user with ID %s not found", id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, utils.ErrUserNotFound
 		}
-
 		return &models.User{}, fmt.Errorf("error querying user by id: %w", err)
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (r *userRepository) GetUserByEmail(ctx context.Context, userRequest models.UserLoginRequest) (userCredentials, error) {
@@ -95,22 +112,20 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, userRequest models.
 		WHERE email = $1		
 	`
 
-	user := userCredentials{}
-
+	var creds userCredentials
 	err := r.db.QueryRow(ctx, query, userRequest.Email).Scan(
-		&user.ID,
-		&user.Password,
+		&creds.ID,
+		&creds.Password,
 	)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return userCredentials{}, fmt.Errorf("user with email %s not found", userRequest.Email)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return userCredentials{}, utils.ErrUserNotFound
 		}
-
 		return userCredentials{}, fmt.Errorf("error querying user by email: %w", err)
 	}
 
-	return user, nil
+	return creds, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, id string, user *models.UserUpdate) (*models.User, error) {
@@ -140,6 +155,12 @@ func (r *userRepository) UpdateUser(ctx context.Context, id string, user *models
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, utils.ErrUserNotFound
+		}
+		if utils.IsPgError(err, utils.UniqueViolationErrCode) {
+			return nil, utils.ErrUserExists
+		}
 		return nil, fmt.Errorf("error updating user: %w", err)
 	}
 
@@ -152,16 +173,14 @@ func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 		WHERE id = $1
 	`
 
-	result, err := r.db.Exec(ctx,
-		query,
-		id)
-
+	result, err := r.db.Exec(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("error deleting user: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return fmt.Errorf("user with ID %s not found", id)
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return utils.ErrUserNotFound
 	}
 
 	return nil
