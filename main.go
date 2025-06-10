@@ -69,6 +69,6 @@ func main() {
 
 	defer database.Close()
 
-	router.Run(":8080")
+	router.Run(":" + os.Getenv("PORT"))
 	fmt.Println("Server started.")
 }

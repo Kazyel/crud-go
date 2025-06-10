@@ -20,6 +20,7 @@ A clean, extensible and scalable REST API built with Go, featuring user manageme
 - **Web Framework**: Gin
 - **Database**: PostgreSQL
 - **Database Driver**: pgx/v5 with connection pooling
+- **Database Migrations**: Goose
 - **Password Hashing**: argon5
 
 ## 📁 Project Structure
