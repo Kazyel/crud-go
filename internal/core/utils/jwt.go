@@ -17,9 +17,9 @@ type CustomClaims struct {
 }
 
 func getJWTKey() []byte {
-	key := os.Getenv("JWT_KEY")
+	key := os.Getenv("JWT_SECRET")
 	if key == "" {
-		panic("JWT_KEY environment variable is required")
+		panic("JWT_SECRET environment variable is required")
 	}
 	return []byte(key)
 }
