@@ -13,6 +13,7 @@ A clean, extensible and scalable REST API built with Go, featuring user manageme
 - **Error Handling**: Proper HTTP status codes and error responses.
 - **Input Validation**: Comprehensive request validation and sanitization.
 - **JSON API**: RESTful endpoints with consistent response format.
+- **OAuth2 Integration**: Secure authentication with GitHub OAuth2.
 
 ## 🛠️ Tech Stack
 
@@ -22,6 +23,7 @@ A clean, extensible and scalable REST API built with Go, featuring user manageme
 - **Database Driver**: pgx/v5 with connection pooling
 - **Database Migrations**: Goose
 - **Password Hashing**: argon5
+- **OAuth2 Handler**: goth
 
 ## 📁 Project Structure
 
@@ -35,11 +37,12 @@ rest-crud-go/
 │   ├── core/
 │   │   ├── services/     # Business logic layer
 │   │   ├── repositories/ # Data access layer
-│   │   ├── models/       # Data models and DTOs
-│   │   └── utils/        # Utility functions
-│   └── database/ # Migrations
+│   │   └── models/       # Data models and DTOs
+│   │
+│   ├── database/ # Migrations
+│   └── utils/    # Utility functions
 │
-├── tests/        # Simples Unit Tests
+├── tests/  # Simples Unit Tests
 ├── go.mod
 ├── go.sum
 ├── air.toml
@@ -51,14 +54,14 @@ rest-crud-go/
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- Go 1.23 or higher
 - PostgreSQL 12+
 - Git
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/rest-crud-go.git
+git clone https://github.com/Kazyel/crud-go.git
 cd rest-crud-go
 ```
 
@@ -75,11 +78,18 @@ Create a `.env` file in the root directory:
 ```env
 PORT=8080
 DATABASE_URL=postgres_url
+
+GITHUB_CLIENT_SECRET=secret_key
+GITHUB_CLIENT_ID=client_id
+GITHUB_CALLBACK_URL=callback_url
+SESSION_SECRET=session_secret
+
 GOOSE_DRIVER=postgres
 GOOSE_DBSTRING=postgres_url
 GOOSE_MIGRATION_DIR=./internal/database/migrations
 GOOSE_TABLE=custom.goose_migrations
-JWT_SECRET=whatever
+
+JWT_SECRET=jwt_secret
 ```
 
 ### 5. Run the application

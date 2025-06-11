@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"rest-crud-go/internal/core/utils"
+	"rest-crud-go/internal/utils"
 	"testing"
 )
 

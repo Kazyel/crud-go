@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"rest-crud-go/internal/core/models"
 	"rest-crud-go/internal/core/repositories"
-	"rest-crud-go/internal/core/utils"
+	"rest-crud-go/internal/utils"
 )
 
 type AuthService struct {

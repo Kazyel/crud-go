@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"net/http"
-	"rest-crud-go/internal/core/utils"
+	"rest-crud-go/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

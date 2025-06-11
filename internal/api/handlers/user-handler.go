@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"rest-crud-go/internal/core/models"
 	"rest-crud-go/internal/core/services"
-	"rest-crud-go/internal/core/utils"
+	"rest-crud-go/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

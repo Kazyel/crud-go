@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"rest-crud-go/internal/core/models"
-	"rest-crud-go/internal/core/utils"
+	"rest-crud-go/internal/utils"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/markbates/goth"
