@@ -7,6 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type AuthHandlers struct {
+	AuthHandler  *handlers.AuthHandler
+	OAuthHandler *handlers.OAuthHandler
+}
+
 func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute := router.Group("/api/v1/users")
 
@@ -20,9 +25,12 @@ func UserRoutes(router *gin.Engine, handler *handlers.UserHandler) {
 	userRoute.DELETE("/:id", middlewares.AuthJWT(), handler.DeleteUser)
 }
 
-func AuthRoutes(router *gin.Engine, handler *handlers.AuthHandler) {
+func AuthRoutes(router *gin.Engine, handlers *AuthHandlers) {
 	authRoute := router.Group("/api/v1/auth")
 
-	authRoute.POST("/login", handler.Login)
-	authRoute.POST("/logout", handler.Logout)
+	authRoute.GET("/github", handlers.OAuthHandler.GitHubLogin)
+	authRoute.GET("/github/callback", handlers.OAuthHandler.GitHubCallback)
+
+	authRoute.POST("/login", handlers.AuthHandler.Login)
+	authRoute.POST("/logout", handlers.AuthHandler.Logout)
 }

@@ -26,7 +26,7 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 		})
 	}
 
-	userTokens, err := auth.service.AuthenticaUser(ctx, loginRequest)
+	userTokens, err := auth.service.AuthenticateUser(ctx, loginRequest)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, APIResponse{
 			Success: false,

@@ -23,7 +23,7 @@ func CreateAuthService(repo repositories.UserRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) AuthenticaUser(ctx context.Context, request models.UserLoginRequest) (*UserTokens, error) {
+func (s *AuthService) AuthenticateUser(ctx context.Context, request models.UserLoginRequest) (*UserTokens, error) {
 	creds, err := s.repo.GetUserByEmail(ctx, request)
 	if err != nil {
 		if errors.Is(err, utils.ErrUserNotFound) {
