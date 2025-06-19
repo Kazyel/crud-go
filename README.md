@@ -17,7 +17,7 @@ A clean, extensible and scalable REST API built with Go, featuring user manageme
 
 ## 🛠️ Tech Stack
 
-- **Language**: Go 1.21+
+- **Language**: Go 1.23+
 - **Web Framework**: Gin
 - **Database**: PostgreSQL
 - **Database Driver**: pgx/v5 with connection pooling

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"rest-crud-go/internal/core/models"
 	"rest-crud-go/internal/core/repositories"
 	"rest-crud-go/internal/utils"
 
@@ -19,12 +18,12 @@ func CreateOAuthService(repo *repositories.OAuthRepository) *OAuthService {
 }
 
 func (s *OAuthService) AuthenticateGithub(ctx context.Context, request goth.User) (string, error) {
-	user, err := s.createOrFindUser(ctx, request)
+	userId, err := s.handleUserCredentials(ctx, request)
 	if err != nil {
 		return "", err
 	}
 
-	jwtToken, _, err := utils.GenerateJWT(user.ID)
+	jwtToken, _, err := utils.GenerateJWT(userId)
 	if err != nil {
 		return "", err
 	}
@@ -32,24 +31,22 @@ func (s *OAuthService) AuthenticateGithub(ctx context.Context, request goth.User
 	return jwtToken, nil
 }
 
-func (s *OAuthService) createOrFindUser(ctx context.Context, request goth.User) (*models.OAuthUser, error) {
-	// TODO: Implement user update later
-	existingUser, err := s.repo.GetUserByProviderID(ctx, "github", request.UserID)
+func (s *OAuthService) handleUserCredentials(ctx context.Context, request goth.User) (string, error) {
+	existingUserId, _ := s.repo.GetUserByProviderID(ctx, "github", request.UserID)
 
-	if err == nil {
-		return existingUser, nil
+	if existingUserId != "" {
+		err := s.repo.UpdateUser(ctx, request)
+		if err != nil {
+			return "", err
+		}
+
+		return existingUserId, nil
 	}
 
-	user, err := s.repo.CreateUser(ctx, request)
+	newUserId, err := s.repo.CreateUser(ctx, request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return "", fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return user, nil
+	return newUserId, nil
 }
-
-// func (s *OAuthService) userExistsByEmail(ctx context.Context, email string) bool {
-// 	req := models.UserLoginRequest{Email: email}
-// 	_, err := s.repo.GetUserByEmail(ctx, req)
-// 	return err == nil
-// }
