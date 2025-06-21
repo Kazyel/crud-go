@@ -1,7 +1,8 @@
 import initializeAccountCreation from "./create-account";
+import type GlobalState from "./global-state";
 import initializeLogin from "./login";
 
-const buildForms = () => {
+const buildForms = (state: GlobalState) => {
   const createLoginFormComponent = () => {
     const form = document.createElement("form");
     form.id = "login-form";
@@ -75,13 +76,13 @@ const buildForms = () => {
         if (currentForm.id === "create-account-form") {
           currentForm.replaceWith(createLoginFormComponent());
           currentAnchor.replaceWith(createAccountLinkComponent());
-          initializeLogin();
+          initializeLogin(state);
           return;
         }
 
         currentForm.replaceWith(createAccountFormComponent());
         currentAnchor.replaceWith(createLoginLinkComponent());
-        initializeAccountCreation();
+        initializeAccountCreation(state);
         return;
       }
     }

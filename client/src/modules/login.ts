@@ -1,6 +1,19 @@
-import renderResponse from "./render-response";
+import type GlobalState from "./global-state";
+import type { LoginResponse } from "./types";
 
-const initializeLogin = () => {
+import renderResponse from "./render-response";
+import User from "./user";
+
+export const login = async (state: GlobalState, data: LoginResponse) => {
+  state.setUser(new User(data.data.user_id, "", ""));
+  state.setCSRFToken(data.data.csrf_token);
+  state.getUser()?.setIsLoggedIn(true);
+
+  window.localStorage.setItem("user", JSON.stringify(state.getUser()!.getID()));
+  window.localStorage.setItem("csrfToken", state.getCSRFToken()!);
+};
+
+const initializeLogin = (state: GlobalState) => {
   const submitForm = async (form: HTMLFormElement) => {
     const formData = new FormData(form);
 
@@ -12,12 +25,15 @@ const initializeLogin = () => {
       }),
     });
 
+    const data = await response.json();
+
     if (response.ok) {
-      renderResponse(await response.json());
+      renderResponse(data);
+      login(state, data);
       return;
     }
 
-    renderResponse(await response.json());
+    renderResponse(data);
   };
 
   const loginForm = document.querySelector<HTMLFormElement>("#login-form");

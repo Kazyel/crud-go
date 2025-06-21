@@ -39,7 +39,7 @@ func setupRouter(db *pgxpool.Pool) *gin.Engine {
 	router := gin.Default()
 
 	router.Use(func(ctx *gin.Context) {
-		ctx.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+		ctx.Header("Access-Control-Allow-Origin", "http://localhost:5173")
 		ctx.Header("Access-Control-Allow-Credentials", "true")
 		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
 		ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

@@ -1,6 +1,9 @@
+import type GlobalState from "./global-state";
+
+import { login } from "./login";
 import renderResponse from "./render-response";
 
-const initializeAccountCreation = () => {
+const initializeAccountCreation = (state: GlobalState) => {
   const submitForm = async (form: HTMLFormElement) => {
     const formData = new FormData(form);
 
@@ -13,12 +16,15 @@ const initializeAccountCreation = () => {
       }),
     });
 
+    const data = await response.json();
+
     if (response.ok) {
-      renderResponse(await response.json());
+      renderResponse(data);
+      login(state, data);
       return;
     }
 
-    renderResponse(await response.json());
+    renderResponse(data);
   };
 
   const createAccountForm =

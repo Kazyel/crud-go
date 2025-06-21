@@ -24,6 +24,7 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 		})
+		return
 	}
 
 	userTokens, err := auth.service.AuthenticateUser(ctx, loginRequest)
@@ -32,6 +33,7 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 		})
+		return
 	}
 
 	ctx.SetCookie(

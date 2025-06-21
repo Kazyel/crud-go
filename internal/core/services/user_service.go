@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"rest-crud-go/internal/core/models"
@@ -110,7 +109,7 @@ func (s *UserService) UpdateUser(ctx context.Context, id string, req *models.Use
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	updatedUser.Password = sql.NullString{}
+	updatedUser.Password = ""
 	return updatedUser, nil
 }
 

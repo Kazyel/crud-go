@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -18,20 +17,18 @@ const (
 	saltLen   = 16
 )
 
-func HashPassword(password string) (sql.NullString, error) {
+func HashPassword(password string) (string, error) {
 	salt := make([]byte, saltLen)
 	_, err := rand.Read(salt)
 	if err != nil {
-		return sql.NullString{}, err
+		return "", err
 	}
 
 	hash := argon2.IDKey([]byte(password), salt, timestamp, memory, threads, keyLen)
 	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
 	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
 
-	return sql.NullString{
-		String: fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memory, timestamp, threads, saltB64, hashB64),
-	}, nil
+	return fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", memory, timestamp, threads, saltB64, hashB64), nil
 }
 
 func VerifyPassword(password, encodedHash string) bool {

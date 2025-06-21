@@ -3,6 +3,7 @@ import "./css/reset.css";
 
 import initializeLogin from "./modules/login";
 import buildForms from "./modules/forms.ts";
+import GlobalState from "./modules/global-state.ts";
 
 export default function renderMainView() {
   const app = document.querySelector<HTMLDivElement>("#app");
@@ -31,7 +32,9 @@ export default function renderMainView() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const globalState = new GlobalState();
+
   renderMainView();
-  buildForms();
-  initializeLogin();
+  buildForms(globalState);
+  initializeLogin(globalState);
 });
