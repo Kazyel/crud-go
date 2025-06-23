@@ -1,97 +1,158 @@
-import initializeAccountCreation from "./create-account";
-import type GlobalState from "./global-state";
-import initializeLogin from "./login";
+import type { UserState } from "../context/user-context";
+import renderResponse from "./render-response";
 
-const buildForms = (state: GlobalState) => {
-  const createLoginFormComponent = () => {
-    const form = document.createElement("form");
-    form.id = "login-form";
-    form.method = "POST";
+type BodyObject = {
+  [key: string]: FormDataEntryValue;
+};
 
-    form.innerHTML = `
+const createBody = (formData: FormData) => {
+  let bodyObject: BodyObject = {};
+  formData.forEach((value, key) => {
+    bodyObject[key] = value;
+  });
+
+  return bodyObject;
+};
+
+export const submitForm = async (
+  state: UserState,
+  form: HTMLFormElement,
+  url: string
+) => {
+  const formData = new FormData(form);
+
+  const response = await fetch(url, {
+    method: form.method.toUpperCase(),
+    body: JSON.stringify(createBody(formData)),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    renderResponse(data);
+    return;
+  }
+
+  renderResponse(data);
+  state.login(data);
+};
+
+const createFormComponent = (
+  id: string,
+  method: string,
+  url: string,
+  innerHTML: string,
+  state: UserState
+) => {
+  const form = document.createElement("form");
+  form.id = id;
+  form.method = method;
+  form.innerHTML = innerHTML;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitForm(state, form, url);
+  });
+  return form;
+};
+
+const createLink = (id: string, innerHTML: string, state: UserState) => {
+  const link = document.createElement("a");
+  link.id = id;
+  link.innerHTML = innerHTML;
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    switchForms(state);
+  });
+  return link;
+};
+
+const buildLoginForm = (
+  state: UserState,
+  currentForm: HTMLFormElement,
+  currentAnchor: HTMLAnchorElement
+) => {
+  currentForm.replaceWith(
+    createFormComponent(
+      "create-account-form",
+      "POST",
+      "http://localhost:8080/api/v1/users/",
+      ` <label for="name">Name</label>
+        <input type="text" name="name" placeholder="Your name" />
+        <label for="email">Email</label>
+        <input type="email" name="email" placeholder="Your email" />
+        <label for="password">Password</label>
+        <input type="password" name="password" placeholder="Your password" />
+        <button type="submit">Submit</button>
+        `,
+      state
+    )
+  );
+  currentAnchor.replaceWith(
+    createLink("login-link", "Already have an account? Login here.", state)
+  );
+};
+
+const buildCreateAccountForm = (
+  state: UserState,
+  currentForm: HTMLFormElement,
+  currentAnchor: HTMLAnchorElement
+) => {
+  currentForm.replaceWith(
+    createFormComponent(
+      "login-form",
+      "POST",
+      "http://localhost:8080/api/v1/auth/login",
+      `
       <label for="email">Email</label>
       <input type="email" name="email" placeholder="Your email" />
-  
       <label for="password">Password</label>
       <input type="password" name="password" placeholder="Your password" />
-    
       <button type="submit">Submit</button>
-    `;
+      `,
+      state
+    )
+  );
+  currentAnchor.replaceWith(
+    createLink("create-account-link", "Or create an account...", state)
+  );
+};
 
-    return form;
-  };
+const switchForms = (state: UserState) => {
+  const formContainer = document.querySelector<HTMLDivElement>("#form-container");
+  if (!formContainer) {
+    return;
+  }
 
-  const createAccountFormComponent = () => {
-    const form = document.createElement("form");
-    form.id = "create-account-form";
-    form.method = "POST";
+  const currentForm = formContainer.querySelector<HTMLFormElement>("form");
+  const currentAnchor = formContainer.querySelector<HTMLAnchorElement>("a");
+  if (!currentForm || !currentAnchor) {
+    return;
+  }
 
-    form.innerHTML = `
-    <label for="name">Name</label>
-    <input type="text" name="name" placeholder="Your name" />
-    
-    <label for="email">Email</label>
-    <input type="email" name="email" placeholder="Your email" />
-    
-    <label for="password">Password</label>
-    <input type="password" name="password" placeholder="Your password" />
-    
-    <button type="submit">Submit</button>
-    `;
+  switch (currentForm.id) {
+    case "login-form":
+      buildLoginForm(state, currentForm, currentAnchor);
+      break;
+    case "create-account-form":
+      buildCreateAccountForm(state, currentForm, currentAnchor);
+      break;
+    default:
+      return;
+  }
+};
 
-    return form;
-  };
-
-  const createLoginLinkComponent = () => {
-    const link = document.createElement("a");
-    link.id = "login-link";
-    link.innerHTML = "Already have an account? Login here.";
-    link.addEventListener("click", (event) => {
+const buildForms = (state: UserState) => {
+  const loginForm = document.querySelector<HTMLFormElement>("#login-form");
+  if (loginForm) {
+    loginForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      switchForms();
+      submitForm(state, loginForm, "http://localhost:8080/api/v1/auth/login");
     });
-
-    return link;
-  };
-
-  const createAccountLinkComponent = () => {
-    const link = document.createElement("a");
-    link.id = "create-account-link";
-    link.innerHTML = "Or create an account...";
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      switchForms();
-    });
-
-    return link;
-  };
-
-  const switchForms = () => {
-    const formContainer = document.querySelector<HTMLDivElement>("#form-container");
-    if (formContainer) {
-      const currentForm = formContainer.querySelector<HTMLFormElement>("form");
-      const currentAnchor = formContainer.querySelector<HTMLAnchorElement>("a");
-
-      if (currentForm && currentAnchor) {
-        if (currentForm.id === "create-account-form") {
-          currentForm.replaceWith(createLoginFormComponent());
-          currentAnchor.replaceWith(createAccountLinkComponent());
-          initializeLogin(state);
-          return;
-        }
-
-        currentForm.replaceWith(createAccountFormComponent());
-        currentAnchor.replaceWith(createLoginLinkComponent());
-        initializeAccountCreation(state);
-        return;
-      }
-    }
-  };
+  }
 
   const initialAnchor = document.querySelector<HTMLAnchorElement>("#create-account-link");
   initialAnchor?.addEventListener("click", (event) => {
     event.preventDefault();
-    switchForms();
+    switchForms(state);
   });
 };
 

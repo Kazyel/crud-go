@@ -1,9 +1,9 @@
 import "./css/style.css";
 import "./css/reset.css";
 
-import initializeLogin from "./modules/login";
+import { createUserContext } from "./context/user-context.ts";
 import buildForms from "./modules/forms.ts";
-import GlobalState from "./modules/global-state.ts";
+import renderProfileView from "./modules/profile.ts";
 
 export default function renderMainView() {
   const app = document.querySelector<HTMLDivElement>("#app");
@@ -29,12 +29,17 @@ export default function renderMainView() {
           </div>
       </div>`;
   }
+
+  return app;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const globalState = new GlobalState();
-
+  const userContext = createUserContext();
   renderMainView();
-  buildForms(globalState);
-  initializeLogin(globalState);
+
+  if (userContext.getUser()?.isLoggedIn) {
+    renderProfileView(userContext);
+  }
+
+  buildForms(userContext);
 });
