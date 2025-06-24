@@ -1,22 +1,18 @@
-import type { LoginResponse } from "../types/types";
-
-import renderProfileView from "../modules/profile";
-
 export class User {
-  #id: string;
+  private id: string;
   name: string;
   email: string;
   isLoggedIn: boolean;
 
   constructor(id: string, name: string, email: string) {
-    this.#id = id;
+    this.id = id;
     this.name = name;
     this.email = email;
     this.isLoggedIn = false;
   }
 
   getID() {
-    return this.#id;
+    return this.id;
   }
 
   setIsLoggedIn(isLoggedIn: boolean) {
@@ -58,34 +54,6 @@ export class UserState {
       this.#user.setIsLoggedIn(true);
       this.#csrfToken = csrfToken;
     }
-  }
-
-  login(data: LoginResponse) {
-    this.setUser(new User(data.data.user_id, "", ""));
-    this.setCSRFToken(data.data.csrf_token);
-    this.getUser()?.setIsLoggedIn(true);
-
-    window.localStorage.setItem("user", JSON.stringify(this.getUser()!.getID()));
-    window.localStorage.setItem("csrfToken", this.getCSRFToken()!);
-    renderProfileView(this);
-  }
-
-  async logout() {
-    const response = await fetch("http://localhost:8080/api/v1/auth/logout", {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      return;
-    }
-
-    this.setUser(null);
-    this.setCSRFToken(null);
-    this.getUser()?.setIsLoggedIn(false);
-
-    window.localStorage.removeItem("user");
-    window.localStorage.removeItem("csrfToken");
-    window.location.reload();
   }
 }
 

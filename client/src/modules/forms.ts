@@ -1,4 +1,6 @@
-import type { UserState } from "../context/user-context";
+import type { App } from "../main";
+import type { LoginResponse } from "../types/types";
+
 import renderResponse from "./render-response";
 
 type BodyObject = {
@@ -14,34 +16,12 @@ const createBody = (formData: FormData) => {
   return bodyObject;
 };
 
-export const submitForm = async (
-  state: UserState,
-  form: HTMLFormElement,
-  url: string
-) => {
-  const formData = new FormData(form);
-
-  const response = await fetch(url, {
-    method: form.method.toUpperCase(),
-    body: JSON.stringify(createBody(formData)),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    renderResponse(data);
-    return;
-  }
-
-  renderResponse(data);
-  state.login(data);
-};
-
 const createFormComponent = (
   id: string,
   method: string,
   url: string,
   innerHTML: string,
-  state: UserState
+  app: App
 ) => {
   const form = document.createElement("form");
   form.id = id;
@@ -49,24 +29,24 @@ const createFormComponent = (
   form.innerHTML = innerHTML;
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitForm(state, form, url);
+    submitForm(app, form, url);
   });
   return form;
 };
 
-const createLink = (id: string, innerHTML: string, state: UserState) => {
+const createLink = (id: string, innerHTML: string, app: App) => {
   const link = document.createElement("a");
   link.id = id;
   link.innerHTML = innerHTML;
   link.addEventListener("click", (event) => {
     event.preventDefault();
-    switchForms(state);
+    switchForms(app);
   });
   return link;
 };
 
 const buildLoginForm = (
-  state: UserState,
+  app: App,
   currentForm: HTMLFormElement,
   currentAnchor: HTMLAnchorElement
 ) => {
@@ -83,16 +63,16 @@ const buildLoginForm = (
         <input type="password" name="password" placeholder="Your password" />
         <button type="submit">Submit</button>
         `,
-      state
+      app
     )
   );
   currentAnchor.replaceWith(
-    createLink("login-link", "Already have an account? Login here.", state)
+    createLink("login-link", "Already have an account? Login here.", app)
   );
 };
 
 const buildCreateAccountForm = (
-  state: UserState,
+  app: App,
   currentForm: HTMLFormElement,
   currentAnchor: HTMLAnchorElement
 ) => {
@@ -108,16 +88,34 @@ const buildCreateAccountForm = (
       <input type="password" name="password" placeholder="Your password" />
       <button type="submit">Submit</button>
       `,
-      state
+      app
     )
   );
   currentAnchor.replaceWith(
-    createLink("create-account-link", "Or create an account...", state)
+    createLink("create-account-link", "Or create an account...", app)
   );
 };
 
-const switchForms = (state: UserState) => {
-  const formContainer = document.querySelector<HTMLDivElement>("#form-container");
+export const submitForm = async (state: App, form: HTMLFormElement, url: string) => {
+  const formData = new FormData(form);
+
+  const response = await fetch(url, {
+    method: form.method.toUpperCase(),
+    body: JSON.stringify(createBody(formData)),
+  });
+
+  const data: LoginResponse = await response.json();
+  if (!response.ok) {
+    renderResponse(data);
+    return;
+  }
+
+  renderResponse(data);
+  state.login(data);
+};
+
+const switchForms = (app: App) => {
+  const formContainer = document.querySelector<HTMLDivElement>("#container");
   if (!formContainer) {
     return;
   }
@@ -130,29 +128,29 @@ const switchForms = (state: UserState) => {
 
   switch (currentForm.id) {
     case "login-form":
-      buildLoginForm(state, currentForm, currentAnchor);
+      buildLoginForm(app, currentForm, currentAnchor);
       break;
     case "create-account-form":
-      buildCreateAccountForm(state, currentForm, currentAnchor);
+      buildCreateAccountForm(app, currentForm, currentAnchor);
       break;
     default:
       return;
   }
 };
 
-const buildForms = (state: UserState) => {
+const buildForms = (app: App) => {
   const loginForm = document.querySelector<HTMLFormElement>("#login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      submitForm(state, loginForm, "http://localhost:8080/api/v1/auth/login");
+      submitForm(app, loginForm, "http://localhost:8080/api/v1/auth/login");
     });
   }
 
   const initialAnchor = document.querySelector<HTMLAnchorElement>("#create-account-link");
   initialAnchor?.addEventListener("click", (event) => {
     event.preventDefault();
-    switchForms(state);
+    switchForms(app);
   });
 };
 

@@ -1,12 +1,12 @@
-import type { UserState } from "../context/user-context";
+import type { App } from "../main";
 
-const renderProfileView = (state: UserState) => {
-  const user = state.getUser();
+const renderProfileView = (app: App) => {
+  const user = app.getUserContext().getUser();
   if (!user || !user.isLoggedIn) {
     return;
   }
 
-  const formContainer = document.querySelector<HTMLDivElement>("#form-container");
+  const formContainer = document.querySelector<HTMLDivElement>("#container");
   if (!formContainer) {
     return;
   }
@@ -28,7 +28,7 @@ const renderProfileView = (state: UserState) => {
   if (logoutButton) {
     logoutButton.addEventListener("click", (event) => {
       event.preventDefault();
-      state.logout();
+      app.logout();
     });
   }
 };
