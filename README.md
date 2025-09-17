@@ -1,6 +1,6 @@
 # REST CRUD Go API - A Simple Template
 
-A clean, extensible and scalable REST API built with Go, featuring user management with CRUD operations, authentication, and pagination.
+A clean and extensible REST API built with Go, featuring user management with CRUD operations, authentication, and pagination.
 
 ## 🚀 Features
 
